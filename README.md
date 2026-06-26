@@ -1,6 +1,6 @@
-# 🎭 SillyTavern Advanced Avatar Control
+# 🎭 SillyTavern Avatar Manip
 
-A powerful, lightweight third-party extension for SillyTavern that gives you complete control over your character and user avatars. Drag, rotate, resize, and fine-tune your avatars with precision and ease.
+A lightweight, third-party extension for SillyTavern that gives you complete control over your character and user avatars. Drag, rotate, resize, and fine-tune your avatars with precision and ease.
 
 ## ✨ Features
 
