@@ -6,10 +6,13 @@
     transform-origin: center center !important;
     will-change: transform !important;
     user-select: none !important;
+    -webkit-user-select: none !important;
     position: fixed !important;
     z-index: 999999 !important;
     transition: opacity 0.2s ease, z-index 0.3s ease;
     touch-action: none !important;
+    -webkit-touch-callout: none !important;
+    -webkit-tap-highlight-color: transparent !important;
 }
 
 .zoomed_avatar.dragging {
@@ -18,6 +21,10 @@
 
 .zoomed_avatar.rotating {
     cursor: crosshair !important;
+}
+
+.zoomed_avatar.pinching {
+    cursor: zoom-in !important;
 }
 
 .zoomed_avatar .dragClose,
@@ -30,4 +37,38 @@
     transition: transform 0.1s ease-out;
     position: relative;
     z-index: 9999999 !important;
+    /* Mobil dokunuş için minimum tıklama alanı */
+    min-width: 24px;
+    min-height: 24px;
+    touch-action: manipulation !important;
+}
+
+/* Mobil için ek stiller */
+@media (max-width: 768px) {
+    .zoomed_avatar {
+        /* Mobilde daha büyük minimum boyut */
+        min-width: 50px;
+        min-height: 50px;
+    }
+    
+    .zoomed_avatar .dragClose,
+    .zoomed_avatar .zoom-cross,
+    .zoomed_avatar .avatar-close,
+    .zoomed_avatar .fa-times,
+    .zoomed_avatar .close-btn {
+        /* Mobilde daha büyük tıklama alanları */
+        min-width: 32px;
+        min-height: 32px;
+        padding: 8px;
+    }
+}
+
+/* iOS Safari için özel düzeltmeler */
+@supports (-webkit-touch-callout: none) {
+    .zoomed_avatar {
+        /* iOS'ta transform performansını iyileştir */
+        -webkit-transform: translate(var(--avatar-x, 0px), var(--avatar-y, 0px)) 
+                          scale(var(--avatar-scale, 1)) 
+                          rotate(var(--avatar-rotate, 0deg)) !important;
+    }
 }
