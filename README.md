@@ -1,28 +1,37 @@
-# 🎭 SillyTavern Avatar Manip
+# SillyTavern Avatar Manip
 
-A lightweight, third-party extension for SillyTavern that gives you complete control over your character and user avatars. Drag, rotate, resize, and fine-tune your avatars with precision and ease.
+A third-party extension for SillyTavern that provides full control over character and user avatars.
 
-## ✨ Features
+## Features
 
-* 🖱️ **Drag & Drop:** Click and hold any avatar to move it freely around the chat interface.
-* 🔄 **Smooth Rotation:** Grab the outer edges of any avatar to rotate it with fluid, unrestricted 360-degree motion.
-* 📜 **Scroll to Resize:** Hover over an avatar and spin your mouse wheel to instantly scale it up or down.
-* 🎯 **Double-Click Reset:** Double-click any avatar to instantly reset its position, scale, and rotation to default.
-* 📊 **Three-Layer Positioning:** Choose where your avatar sits in the visual hierarchy:
-  * **Background** - Behind the chat, subtle and non-intrusive
-  * **Above Chat** - Over messages, visible while reading conversations
-  * **Above UI** - Over everything, always in sight
-* 🎚️ **Customizable Threshold:** Adjust the rotation zone sensitivity to your liking via the settings panel.
-* 👻 **Visual Feedback:** Optional opacity changes during drag and rotate interactions for better control awareness.
-* 🧩 **Seamless Integration:** Works perfectly with SillyTavern's native UI, extension management, and close buttons remain perfectly scaled.
+- Drag and drop avatars freely around the interface
+- Rotate avatars 360 degrees by grabbing outer edges
+- Resize avatars with mouse wheel scrolling
+- Double-click to reset position, scale, and rotation
+- Three layer positions: Background, Above Chat, Above UI
+- Adjustable rotation sensitivity threshold
+- Optional opacity feedback during interactions
 
----
+## Installation
 
-## 🛠️ Installation
+Place the extension folder into: ..\SillyTavern\SillyTavern-Launcher\SillyTavern\data\default-user\extensions\
 
-Follow these simple steps to install the extension into your SillyTavern setup:
+Restart SillyTavern or reload extensions, then enable from the Extensions panel.
 
-1. **Place the Folder:**  
-   Move or copy the extension folder into the following directory:
-   ```text
-   ..\SillyTavern\SillyTavern-Launcher\SillyTavern\data\default-user\extensions\
+## Configuration
+
+| Setting | Description |
+|---------|-------------|
+| Enable Extension | Master toggle |
+| Enable Rotation | Allow rotation via outer edge drag |
+| Layer Position | Z-Index level selection |
+| Opacity Feedback | Visual feedback during interaction |
+| Wheel Zoom Speed | Zoom sensitivity (0.05 - 0.5) |
+| Rotation Threshold | Rotation zone sensitivity (0.5 - 0.95) |
+
+### v1.0.0
+- Initial release
+
+## License
+
+NULL
