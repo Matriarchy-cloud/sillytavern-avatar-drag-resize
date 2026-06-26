@@ -25,4 +25,4 @@ Follow these simple steps to install the extension into your SillyTavern setup:
 1. **Place the Folder:**  
    Move or copy the extension folder into the following directory:
    ```text
-   ..\SillyTavern-Launcher\SillyTavern\public\scripts\extensions\third-party\
+   ..\SillyTavern\SillyTavern-Launcher\SillyTavern\data\default-user\extensions\
