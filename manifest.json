@@ -1,0 +1,10 @@
+{
+    "display_name": "avatar-manip",
+    "loading_order": 10,
+    "requires": [],
+    "optional": [],
+    "js": "avatar-manip/index.js",
+    "css": "avatar-manip/style.css",
+    "author": "lightdevice",
+    "version": "1.0.0"
+}
