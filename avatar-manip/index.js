@@ -300,7 +300,7 @@ function createSettingsUI() {
 
     const settingsHtml = `
         <div id="${containerId}" class="list-group-item">
-            <div class="m-b-1"><b>Advanced Avatar Control Settings</b></div>
+            <div class="m-b-1"><b>Avatar Manip Settings</b></div>
             <hr class="m-t-1 m-b-1">
             
             <div class="flex-container m-b-1">
