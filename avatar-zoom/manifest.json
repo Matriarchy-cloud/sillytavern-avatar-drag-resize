@@ -2,7 +2,7 @@
     "display_name": "Avatar Drag & Zoom",
     "js": "index.js",
     "author": "lightdevice",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "description": "dragging and resizing character avatars.",
     "loading_order": 10,
     "auto_update": false
