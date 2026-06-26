@@ -19,7 +19,7 @@ const ExtensionState = {
 
 const defaultSettings = {
     enabled: true,
-    alwaysOnTop: true,
+    zIndexMode: 'aboveUI', // 'background', 'aboveChat', 'aboveUI'
     zoomSpeed: 0.1,
     ghostDragEffect: true,
     enableRotation: true,
@@ -35,6 +35,19 @@ function getSettings() {
 
 function saveSettings() {
     saveSettingsDebounced();
+}
+
+function getZIndexValue(mode) {
+    switch(mode) {
+        case 'background':
+            return '10';
+        case 'aboveChat':
+            return '1000';
+        case 'aboveUI':
+            return '999999';
+        default:
+            return '999999';
+    }
 }
 
 function initCSSGenerator() {
@@ -55,6 +68,8 @@ function initCSSGenerator() {
         .zoomed_avatar .close-btn
     `;
 
+    const zIndexValue = getZIndexValue(settings.zIndexMode);
+
     style.textContent = `
         .zoomed_avatar {
             cursor: grab !important;
@@ -65,8 +80,8 @@ function initCSSGenerator() {
             will-change: transform !important;
             user-select: none !important;
             position: fixed !important; 
-            z-index: ${settings.alwaysOnTop ? '999999' : '1000'} !important;
-            transition: opacity 0.2s ease;
+            z-index: ${zIndexValue} !important;
+            transition: opacity 0.2s ease, z-index 0.3s ease;
             touch-action: none !important;
         }
 
@@ -277,9 +292,15 @@ function createSettingsUI() {
 
     $(`#${containerId}`).remove();
 
+    const zIndexLabels = {
+        'background': '🔽 Background (Behind Chat)',
+        'aboveChat': '🀄 Above Chat (Over Messages)',
+        'aboveUI': '🔼 Above UI (Over Everything)'
+    };
+
     const settingsHtml = `
         <div id="${containerId}" class="list-group-item">
-            <div class="m-b-1"><b>Avatar Manip Settings</b></div>
+            <div class="m-b-1"><b>Advanced Avatar Control Settings</b></div>
             <hr class="m-t-1 m-b-1">
             
             <div class="flex-container m-b-1">
@@ -296,11 +317,13 @@ function createSettingsUI() {
                 </label>
             </div>
 
-            <div class="flex-container m-b-1">
-                <label class="checkbox_label">
-                    <input type="checkbox" id="avatar_ext_alwaysOnTop" ${settings.alwaysOnTop ? 'checked' : ''}>
-                    Keep Avatar on Top
-                </label>
+            <div class="m-b-1">
+                <label><b>Layer Position (Z-Index):</b></label>
+                <select id="avatar_ext_zIndexMode" class="text_pole" style="width: 100%; margin-top: 5px;">
+                    <option value="background" ${settings.zIndexMode === 'background' ? 'selected' : ''}>🔽 Background - Behind chat, subtle presence</option>
+                    <option value="aboveChat" ${settings.zIndexMode === 'aboveChat' ? 'selected' : ''}>🀄 Above Chat - Over messages, visible during conversation</option>
+                    <option value="aboveUI" ${settings.zIndexMode === 'aboveUI' ? 'selected' : ''}>🔼 Above UI - Over everything, always on top</option>
+                </select>
             </div>
 
             <div class="flex-container m-b-1">
@@ -341,8 +364,8 @@ function createSettingsUI() {
         window.AdvancedAvatarControlExtension.regenerate();
     });
 
-    $('#avatar_ext_alwaysOnTop').on('change', function() {
-        settings.alwaysOnTop = this.checked;
+    $('#avatar_ext_zIndexMode').on('change', function() {
+        settings.zIndexMode = this.value;
         saveSettings();
         window.AdvancedAvatarControlExtension.regenerate();
     });
