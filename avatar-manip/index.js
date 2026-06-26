@@ -1,147 +1,80 @@
-import { eventSource, event_types, saveSettingsDebounced } from '../../../../script.js';
+import { saveSettingsDebounced } from '../../../../script.js';
 import { extension_settings } from '../../../extensions.js';
 
-const extensionName = 'SillyTavern-AvatarControl';
-
-const ExtensionState = {
-    x: 0,
-    y: 0,
-    scale: 1,
-    rotation: 0,
-    target: null,
-    mode: null,
-    startX: 0,
-    startY: 0,
-    lastAngle: 0,
-    cleanupFunctions: [],
-    initialized: false,
-};
+const extName = 'avatar-manip';
 
 const defaultSettings = {
     enabled: true,
-    zIndexMode: 'aboveUI', // 'background', 'aboveChat', 'aboveUI'
+    zIndexMode: 'aboveUI',
     zoomSpeed: 0.1,
     ghostDragEffect: true,
     enableRotation: true,
     rotationThreshold: 0.7
 };
 
-function getSettings() {
-    if (!extension_settings[extensionName]) {
-        extension_settings[extensionName] = { ...defaultSettings };
-    }
-    return extension_settings[extensionName];
+if (!extension_settings[extName]) {
+    extension_settings[extName] = { ...defaultSettings };
 }
 
-function saveSettings() {
-    saveSettingsDebounced();
-}
+const settings = extension_settings[extName];
+
+let dragState = {
+    target: null,
+    startX: 0,
+    startY: 0,
+    x: 0,
+    y: 0,
+    scale: 1,
+    rotation: 0,
+    mode: null,
+    lastAngle: 0,
+    cleanupFunctions: []
+};
+
+let animationFrameId = null;
 
 function getZIndexValue(mode) {
     switch(mode) {
-        case 'background':
-            return '10';
-        case 'aboveChat':
-            return '1000';
-        case 'aboveUI':
-            return '999999';
-        default:
-            return '999999';
+        case 'background': return '10';
+        case 'aboveChat': return '1000';
+        case 'aboveUI': return '999999';
+        default: return '999999';
     }
-}
-
-function initCSSGenerator() {
-    const settings = getSettings();
-    const styleId = `${extensionName}-styles`;
-    
-    let style = document.getElementById(styleId);
-    if (style) style.remove();
-
-    style = document.createElement('style');
-    style.id = styleId;
-    
-    const closeButtonClasses = `
-        .zoomed_avatar .dragClose,
-        .zoomed_avatar .zoom-cross, 
-        .zoomed_avatar .avatar-close, 
-        .zoomed_avatar .fa-times,
-        .zoomed_avatar .close-btn
-    `;
-
-    const zIndexValue = getZIndexValue(settings.zIndexMode);
-
-    style.textContent = `
-        .zoomed_avatar {
-            cursor: grab !important;
-            transform: translate(var(--avatar-x, 0px), var(--avatar-y, 0px))
-                       scale(var(--avatar-scale, 1))
-                       rotate(var(--avatar-rotate, 0deg)) !important;
-            transform-origin: center center !important;
-            will-change: transform !important;
-            user-select: none !important;
-            position: fixed !important; 
-            z-index: ${zIndexValue} !important;
-            transition: opacity 0.2s ease, z-index 0.3s ease;
-            touch-action: none !important;
-        }
-
-        .zoomed_avatar.dragging {
-            cursor: grabbing !important;
-            ${settings.ghostDragEffect ? 'opacity: 0.8 !important;' : ''}
-        }
-        
-        .zoomed_avatar.rotating {
-            cursor: crosshair !important;
-            ${settings.ghostDragEffect ? 'opacity: 0.9 !important;' : ''}
-        }
-
-        ${closeButtonClasses} {
-            transform: scale(var(--avatar-inverse-scale, 1)) !important;
-            transform-origin: center center !important;
-            transition: transform 0.1s ease-out;
-            position: relative;
-            z-index: 9999999 !important;
-        }
-    `;
-    document.head.appendChild(style);
-
-    ExtensionState.cleanupFunctions.push(() => {
-        const el = document.getElementById(styleId);
-        if (el) el.remove();
-    });
 }
 
 function getAvatar(el) {
     return el?.closest?.('.zoomed_avatar');
 }
 
-function read(el) {
-    ExtensionState.x = parseFloat(el.dataset.avatarX || "0");
-    ExtensionState.y = parseFloat(el.dataset.avatarY || "0");
-    ExtensionState.scale = parseFloat(el.dataset.avatarScale || "1");
-    ExtensionState.rotation = parseFloat(el.dataset.avatarRotate || "0");
+function readAvatar(el) {
+    const { x, y, scale, rotation } = dragState;
+    dragState.x = parseFloat(el.dataset.x || "0");
+    dragState.y = parseFloat(el.dataset.y || "0");
+    dragState.scale = parseFloat(el.dataset.scale || "1");
+    dragState.rotation = parseFloat(el.dataset.rotation || "0");
 }
 
-function write(el) {
-    el.dataset.avatarX = ExtensionState.x;
-    el.dataset.avatarY = ExtensionState.y;
-    el.dataset.avatarScale = ExtensionState.scale;
-    el.dataset.avatarRotate = ExtensionState.rotation;
-
-    el.style.setProperty('--avatar-x', ExtensionState.x + 'px');
-    el.style.setProperty('--avatar-y', ExtensionState.y + 'px');
-    el.style.setProperty('--avatar-scale', ExtensionState.scale);
-    el.style.setProperty('--avatar-rotate', ExtensionState.rotation + 'deg');
+function writeAvatar(el) {
+    const { x, y, scale, rotation } = dragState;
     
-    el.style.setProperty('--avatar-inverse-scale', 1 / ExtensionState.scale);
+    el.dataset.x = x;
+    el.dataset.y = y;
+    el.dataset.scale = scale;
+    el.dataset.rotation = rotation;
+
+    el.style.setProperty('--avatar-x', x + 'px');
+    el.style.setProperty('--avatar-y', y + 'px');
+    el.style.setProperty('--avatar-scale', scale);
+    el.style.setProperty('--avatar-rotate', rotation + 'deg');
+    el.style.setProperty('--avatar-inverse-scale', 1 / scale);
 }
 
 function resetAvatar(el) {
-    ExtensionState.x = 0;
-    ExtensionState.y = 0;
-    ExtensionState.scale = 1;
-    ExtensionState.rotation = 0;
-    write(el);
+    dragState.x = 0;
+    dragState.y = 0;
+    dragState.scale = 1;
+    dragState.rotation = 0;
+    writeAvatar(el);
 }
 
 function getAngleFromCenter(clientX, clientY, rect) {
@@ -156,291 +89,342 @@ function getDistanceFromCenter(clientX, clientY, rect) {
     return Math.hypot(clientX - centerX, clientY - centerY);
 }
 
-function initAvatarControl() {
-    const settings = getSettings();
-    if (!settings.enabled) return;
+function updateZIndexOnly(mode) {
+    const zIndex = getZIndexValue(mode);
+    
+    document.querySelectorAll('.zoomed_avatar').forEach(el => {
+        el.style.setProperty('z-index', zIndex, 'important');
+    });
+    
+    document.documentElement.style.setProperty('--avatar-z-index', zIndex);
+}
 
-    const onPointerDown = (e) => {
-        const target = getAvatar(e.target);
-        if (!target) return;
-        
-        if (e.target.closest('.dragClose, .zoom-cross, .avatar-close, .close-btn, .fa-times')) return;
-
-        e.preventDefault();
-        ExtensionState.target = target;
-        read(target);
-
-        const rect = target.getBoundingClientRect();
-        const radius = Math.min(rect.width, rect.height) / 2;
-        const dist = getDistanceFromCenter(e.clientX, e.clientY, rect);
-        const threshold = settings.rotationThreshold || 0.7;
-
-        if (settings.enableRotation && dist > radius * threshold) {
-            ExtensionState.mode = 'rotate';
-            ExtensionState.lastAngle = getAngleFromCenter(e.clientX, e.clientY, rect);
-            target.classList.add('rotating');
-            target.setPointerCapture(e.pointerId);
+function updateGhostEffect() {
+    document.querySelectorAll('.zoomed_avatar.dragging, .zoomed_avatar.rotating').forEach(el => {
+        if (settings.ghostDragEffect) {
+            if (el.classList.contains('dragging')) el.style.opacity = '0.7';
+            if (el.classList.contains('rotating')) el.style.opacity = '0.9';
         } else {
-            ExtensionState.mode = 'drag';
-            ExtensionState.startX = e.clientX - ExtensionState.x;
-            ExtensionState.startY = e.clientY - ExtensionState.y;
-            target.classList.add('dragging');
-            target.setPointerCapture(e.pointerId);
+            el.style.opacity = '1';
         }
-    };
+    });
+}
 
-    const onPointerMove = (e) => {
-        if (!ExtensionState.mode || !ExtensionState.target) return;
+function handlePointerDown(e) {
+    if (!settings.enabled) return;
+    
+    const target = getAvatar(e.target);
+    if (!target) return;
+    
+    if (e.target.closest('.dragClose, .zoom-cross, .avatar-close, .close-btn, .fa-times')) return;
+    
+    e.preventDefault();
+    dragState.target = target;
+    readAvatar(target);
+    
+    const rect = target.getBoundingClientRect();
+    const radius = Math.min(rect.width, rect.height) / 2;
+    const dist = getDistanceFromCenter(e.clientX, e.clientY, rect);
+    const threshold = settings.rotationThreshold || 0.7;
+    
+    if (settings.enableRotation && dist > radius * threshold) {
+        dragState.mode = 'rotate';
+        dragState.lastAngle = getAngleFromCenter(e.clientX, e.clientY, rect);
+        target.classList.add('rotating');
+        if (settings.ghostDragEffect) {
+            target.style.opacity = '0.9';
+        }
+        target.setPointerCapture(e.pointerId);
+    } else {
+        dragState.mode = 'drag';
+        dragState.startX = e.clientX - dragState.x;
+        dragState.startY = e.clientY - dragState.y;
+        target.classList.add('dragging');
+        if (settings.ghostDragEffect) {
+            target.style.opacity = '0.7';
+        }
+        target.setPointerCapture(e.pointerId);
+    }
+}
 
-        e.preventDefault();
-
-        if (ExtensionState.mode === 'drag') {
-            ExtensionState.x = e.clientX - ExtensionState.startX;
-            ExtensionState.y = e.clientY - ExtensionState.startY;
-        } 
-        else if (ExtensionState.mode === 'rotate') {
-            const rect = ExtensionState.target.getBoundingClientRect();
+function handlePointerMove(e) {
+    if (!dragState.mode || !dragState.target) return;
+    
+    e.preventDefault();
+    
+    if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+    }
+    
+    animationFrameId = requestAnimationFrame(() => {
+        const { mode, target, x, y, lastAngle } = dragState;
+        
+        if (mode === 'drag') {
+            dragState.x = e.clientX - dragState.startX;
+            dragState.y = e.clientY - dragState.startY;
+        } else if (mode === 'rotate') {
+            const rect = target.getBoundingClientRect();
             const currentAngle = getAngleFromCenter(e.clientX, e.clientY, rect);
             
-            let angleDiff = currentAngle - ExtensionState.lastAngle;
-            
-            // Handle angle wrapping to prevent jumps
+            let angleDiff = currentAngle - lastAngle;
             if (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
             if (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
             
-            ExtensionState.rotation += angleDiff * (180 / Math.PI);
-            ExtensionState.lastAngle = currentAngle;
-        }
-
-        write(ExtensionState.target);
-    };
-
-    const onPointerUp = (e) => {
-        if (!ExtensionState.mode) return;
-
-        if (ExtensionState.target) {
-            ExtensionState.target.classList.remove('dragging', 'rotating');
-            try {
-                ExtensionState.target.releasePointerCapture(e.pointerId);
-            } catch (err) {
-                // Ignore if pointer capture wasn't set
-            }
-            write(ExtensionState.target);
+            dragState.rotation += angleDiff * (180 / Math.PI);
+            dragState.lastAngle = currentAngle;
         }
         
-        ExtensionState.mode = null;
-        ExtensionState.target = null;
-    };
-
-    const onPointerCancel = (e) => {
-        if (ExtensionState.target) {
-            ExtensionState.target.classList.remove('dragging', 'rotating');
-            try {
-                ExtensionState.target.releasePointerCapture(e.pointerId);
-            } catch (err) {
-                // Ignore if pointer capture wasn't set
-            }
-        }
-        ExtensionState.mode = null;
-        ExtensionState.target = null;
-    };
-
-    const onWheel = (e) => {
-        const target = getAvatar(e.target);
-        if (!target) return;
-
-        e.preventDefault();
-        read(target);
-
-        if (e.deltaY < 0) {
-            ExtensionState.scale += settings.zoomSpeed;
-        } else {
-            ExtensionState.scale -= settings.zoomSpeed;
-        }
-
-        ExtensionState.scale = Math.max(0.1, Math.min(8, ExtensionState.scale));
-        write(target);
-    };
-
-    const onDoubleClick = (e) => {
-        const target = getAvatar(e.target);
-        if (!target) return;
-        e.preventDefault();
-        resetAvatar(target);
-    };
-
-    document.addEventListener('pointerdown', onPointerDown);
-    document.addEventListener('pointermove', onPointerMove);
-    document.addEventListener('pointerup', onPointerUp);
-    document.addEventListener('pointercancel', onPointerCancel);
-    document.addEventListener('wheel', onWheel, { passive: false });
-    document.addEventListener('dblclick', onDoubleClick);
-
-    ExtensionState.cleanupFunctions.push(() => {
-        document.removeEventListener('pointerdown', onPointerDown);
-        document.removeEventListener('pointermove', onPointerMove);
-        document.removeEventListener('pointerup', onPointerUp);
-        document.removeEventListener('pointercancel', onPointerCancel);
-        document.removeEventListener('wheel', onWheel);
-        document.removeEventListener('dblclick', onDoubleClick);
+        writeAvatar(dragState.target);
+        animationFrameId = null;
     });
 }
 
-function createSettingsUI() {
-    const settings = getSettings();
-    const containerId = `${extensionName}-settings-container`;
+function handlePointerUp(e) {
+    if (!dragState.mode) return;
+    
+    if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+    }
+    
+    if (dragState.target) {
+        dragState.target.classList.remove('dragging', 'rotating');
+        dragState.target.style.opacity = '1';
+        try {
+            dragState.target.releasePointerCapture(e.pointerId);
+        } catch (err) {}
+        writeAvatar(dragState.target);
+    }
+    
+    dragState.mode = null;
+    dragState.target = null;
+}
 
+function handlePointerCancel(e) {
+    if (dragState.target) {
+        dragState.target.classList.remove('dragging', 'rotating');
+        dragState.target.style.opacity = '1';
+        try {
+            dragState.target.releasePointerCapture(e.pointerId);
+        } catch (err) {}
+    }
+    dragState.mode = null;
+    dragState.target = null;
+}
+
+function handleWheel(e) {
+    if (!settings.enabled) return;
+    
+    const target = getAvatar(e.target);
+    if (!target) return;
+    
+    e.preventDefault();
+    readAvatar(target);
+    
+    if (e.deltaY < 0) {
+        dragState.scale += settings.zoomSpeed || 0.1;
+    } else {
+        dragState.scale -= settings.zoomSpeed || 0.1;
+    }
+    
+    dragState.scale = Math.max(0.1, Math.min(8, dragState.scale));
+    writeAvatar(target);
+}
+
+function handleDoubleClick(e) {
+    if (!settings.enabled) return;
+    
+    const target = getAvatar(e.target);
+    if (!target) return;
+    
+    e.preventDefault();
+    resetAvatar(target);
+}
+
+function createUI() {
+    const containerId = 'avatarmanip-container';
     $(`#${containerId}`).remove();
 
-    const zIndexLabels = {
-        'background': '🔽 Background (Behind Chat)',
-        'aboveChat': '🀄 Above Chat (Over Messages)',
-        'aboveUI': '🔼 Above UI (Over Everything)'
-    };
-
-    const settingsHtml = `
-        <div id="${containerId}" class="list-group-item">
-            <div class="m-b-1"><b>Avatar Manip Settings</b></div>
-            <hr class="m-t-1 m-b-1">
-            
-            <div class="flex-container m-b-1">
-                <label class="checkbox_label">
-                    <input type="checkbox" id="avatar_ext_enabled" ${settings.enabled ? 'checked' : ''}>
-                    Enable Extension
-                </label>
+    const html = `
+    <div id="${containerId}" class="extension_container">
+        <div class="inline-drawer">
+            <div class="inline-drawer-toggle inline-drawer-header" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;">
+                <b style="font-size:var(--main-text-size);color:var(--text-color);">AvatarManip Settings</b>
+                <div class="inline-drawer-icon fa-solid fa-circle-chevron-down interactable down" tabindex="0" style="font-size:1.2rem;"></div>
             </div>
+            <div class="inline-drawer-content" style="display:none;padding:10px 5px;">
+                <div class="flex-container m-b-1" style="display:flex;align-items:center;margin-bottom:10px;">
+                    <label class="checkbox_label" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                        <input type="checkbox" id="am_enabled" ${settings.enabled ? 'checked' : ''}>
+                        Enable Extension
+                    </label>
+                </div>
 
-            <div class="flex-container m-b-1">
-                <label class="checkbox_label">
-                    <input type="checkbox" id="avatar_ext_enableRotation" ${settings.enableRotation ? 'checked' : ''}>
-                    Enable Rotation
-                </label>
-            </div>
+                <div class="flex-container m-b-1" style="display:flex;align-items:center;margin-bottom:10px;">
+                    <label class="checkbox_label" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                        <input type="checkbox" id="am_enableRotation" ${settings.enableRotation !== false ? 'checked' : ''}>
+                        Enable Rotation
+                    </label>
+                </div>
 
-            <div class="m-b-1">
-                <label><b>Layer Position (Z-Index):</b></label>
-                <select id="avatar_ext_zIndexMode" class="text_pole" style="width: 100%; margin-top: 5px;">
-                    <option value="background" ${settings.zIndexMode === 'background' ? 'selected' : ''}>🔽 Background - Behind chat, subtle presence</option>
-                    <option value="aboveChat" ${settings.zIndexMode === 'aboveChat' ? 'selected' : ''}>🀄 Above Chat - Over messages, visible during conversation</option>
-                    <option value="aboveUI" ${settings.zIndexMode === 'aboveUI' ? 'selected' : ''}>🔼 Above UI - Over everything, always on top</option>
-                </select>
-            </div>
+                <div class="m-b-1" style="margin-bottom:10px;">
+                    <label><b>Layer Position (Z-Index):</b></label>
+                    <select id="am_zIndexMode" class="text_pole" style="width:100%;margin-top:5px;padding:5px;">
+                        <option value="background" ${settings.zIndexMode === 'background' ? 'selected' : ''}>Background</option>
+                        <option value="aboveChat" ${settings.zIndexMode === 'aboveChat' ? 'selected' : ''}>Above Chat</option>
+                        <option value="aboveUI" ${settings.zIndexMode === 'aboveUI' ? 'selected' : ''}>Above UI</option>
+                    </select>
+                </div>
 
-            <div class="flex-container m-b-1">
-                <label class="checkbox_label">
-                    <input type="checkbox" id="avatar_ext_ghostDragEffect" ${settings.ghostDragEffect ? 'checked' : ''}>
-                    Opacity Feedback on Interaction
-                </label>
-            </div>
+                <div class="flex-container m-b-1" style="display:flex;align-items:center;margin-bottom:10px;">
+                    <label class="checkbox_label" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                        <input type="checkbox" id="am_ghostDragEffect" ${settings.ghostDragEffect !== false ? 'checked' : ''}>
+                        Opacity Feedback
+                    </label>
+                </div>
 
-            <div class="flex-container m-b-1">
-                <label>
-                    Wheel Zoom Speed: 
-                    <input type="number" id="avatar_ext_zoomSpeed" class="text_pole" min="0.05" max="0.5" step="0.05" value="${settings.zoomSpeed}" style="width: 80px; margin-left: 10px;">
-                </label>
-            </div>
+                <div class="flex-container m-b-1" style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px;">
+                    <label>Wheel Zoom Speed</label>
+                    <input type="number" id="am_zoomSpeed" class="text_pole" min="0.05" max="0.5" step="0.05" value="${settings.zoomSpeed || 0.1}" style="width:100%;padding:5px;">
+                </div>
 
-            <div class="flex-container m-b-1">
-                <label>
-                    Rotation Zone Threshold: 
-                    <input type="range" id="avatar_ext_rotationThreshold" min="0.5" max="0.95" step="0.05" value="${settings.rotationThreshold}" style="width: 150px; margin-left: 10px;">
-                    <span id="rotationThresholdValue">${settings.rotationThreshold}</span>
-                </label>
+                <div class="flex-container m-b-1" style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px;">
+                    <label style="display:flex;justify-content:space-between;">
+                        <span>Rotation Threshold</span>
+                        <span id="am_rotationThresholdValue">${settings.rotationThreshold || 0.7}</span>
+                    </label>
+                    <input type="range" id="am_rotationThreshold" min="0.5" max="0.95" step="0.05" value="${settings.rotationThreshold || 0.7}" style="width:100%;">
+                </div>
             </div>
         </div>
-    `;
+    </div>`;
 
-    $('#extensions_settings').append(settingsHtml);
+    $('#extensions_settings').append(html);
 
-    $('#avatar_ext_enabled').on('change', function() {
+    const $container = $(`#${containerId}`);
+    const $toggle = $container.find('.inline-drawer-toggle');
+    const $content = $container.find('.inline-drawer-content');
+    const $icon = $container.find('.inline-drawer-icon');
+
+    $toggle.on('click', function(e) {
+        if (e.target.closest('input') || e.target.closest('select') || e.target.closest('label')) {
+            return;
+        }
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if ($content.is(':visible')) {
+            $content.slideUp(150);
+            $icon.removeClass('up fa-circle-chevron-up').addClass('down fa-circle-chevron-down');
+        } else {
+            $content.slideDown(150);
+            $icon.removeClass('down fa-circle-chevron-down').addClass('up fa-circle-chevron-up');
+        }
+    });
+
+    const $inputs = $container.find('input, select');
+    $inputs.on('click mousedown pointerdown', function(e) {
+        e.stopPropagation();
+    });
+
+    const $labels = $container.find('label');
+    $labels.on('click mousedown pointerdown', function(e) {
+        e.stopPropagation();
+    });
+
+    $('#am_enabled').off('change').on('change', function(e) {
+        e.stopPropagation();
         settings.enabled = this.checked;
-        saveSettings();
-        window.AdvancedAvatarControlExtension.regenerate();
+        saveSettingsDebounced();
     });
 
-    $('#avatar_ext_enableRotation').on('change', function() {
+    $('#am_enableRotation').off('change').on('change', function(e) {
+        e.stopPropagation();
         settings.enableRotation = this.checked;
-        saveSettings();
-        window.AdvancedAvatarControlExtension.regenerate();
+        saveSettingsDebounced();
     });
 
-    $('#avatar_ext_zIndexMode').on('change', function() {
+    $('#am_zIndexMode').off('change').on('change', function(e) {
+        e.stopPropagation();
         settings.zIndexMode = this.value;
-        saveSettings();
-        window.AdvancedAvatarControlExtension.regenerate();
+        saveSettingsDebounced();
+        updateZIndexOnly(this.value);
     });
 
-    $('#avatar_ext_ghostDragEffect').on('change', function() {
+    $('#am_ghostDragEffect').off('change').on('change', function(e) {
+        e.stopPropagation();
         settings.ghostDragEffect = this.checked;
-        saveSettings();
-        window.AdvancedAvatarControlExtension.regenerate();
+        saveSettingsDebounced();
+        updateGhostEffect();
     });
 
-    $('#avatar_ext_zoomSpeed').on('change', function() {
+    $('#am_zoomSpeed').off('change').on('change', function(e) {
+        e.stopPropagation();
         let val = parseFloat(this.value);
         if (isNaN(val)) val = 0.1;
         settings.zoomSpeed = val;
-        saveSettings();
+        saveSettingsDebounced();
     });
 
-    $('#avatar_ext_rotationThreshold').on('input', function() {
+    $('#am_rotationThreshold').off('input').on('input', function(e) {
+        e.stopPropagation();
         let val = parseFloat(this.value);
         settings.rotationThreshold = val;
-        $('#rotationThresholdValue').text(val.toFixed(2));
-        saveSettings();
-        window.AdvancedAvatarControlExtension.regenerate();
+        $('#am_rotationThresholdValue').text(val.toFixed(2));
+        saveSettingsDebounced();
     });
 
-    ExtensionState.cleanupFunctions.push(() => {
-        $(`#${containerId}`).remove();
-    });
+    return $container;
+}
+
+function regenerateExtension() {
+    cleanup();
+    init();
 }
 
 function cleanup() {
-    try {
-        ExtensionState.cleanupFunctions.forEach(fn => {
-            try { fn(); } catch (error) { 
-                console.error(`[${extensionName}] Cleanup error:`, error); 
-            }
-        });
-        ExtensionState.cleanupFunctions = [];
-        ExtensionState.initialized = false;
-        console.log(`[-] ${extensionName} cleaned up`);
-    } catch (error) {
-        console.error(`[${extensionName}] Fatal cleanup error:`, error);
+    if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
     }
+    
+    document.removeEventListener('pointerdown', handlePointerDown);
+    document.removeEventListener('pointermove', handlePointerMove);
+    document.removeEventListener('pointerup', handlePointerUp);
+    document.removeEventListener('pointercancel', handlePointerCancel);
+    document.removeEventListener('wheel', handleWheel);
+    document.removeEventListener('dblclick', handleDoubleClick);
+    $('#avatarmanip-container').remove();
+    dragState.cleanupFunctions.forEach(fn => { try { fn(); } catch(e) {} });
+    dragState.cleanupFunctions = [];
+}
+
+function initEventListeners() {
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('pointermove', handlePointerMove);
+    document.addEventListener('pointerup', handlePointerUp);
+    document.addEventListener('pointercancel', handlePointerCancel);
+    document.addEventListener('wheel', handleWheel, { passive: false });
+    document.addEventListener('dblclick', handleDoubleClick);
 }
 
 async function init() {
-    if (ExtensionState.initialized) return;
-    
     try {
-        console.log(`[+] ${extensionName}: Loading...`);
-        getSettings();
-        
-        createSettingsUI(); 
-        initCSSGenerator();
-        initAvatarControl();
-
-        ExtensionState.initialized = true;
-        console.log(`[+] ${extensionName}: Initialized successfully`);
-        
-    } catch (error) {
-        console.error(`[${extensionName}] Error during initialization:`, error);
+        createUI();
+        initEventListeners();
+        updateZIndexOnly(settings.zIndexMode || 'aboveUI');
+        console.log("AvatarManip başarıyla yüklendi.");
+    } catch (err) {
+        console.error("AvatarManip Yükleme Hatası:", err);
     }
 }
 
-jQuery(() => {
-    init();
+jQuery(async () => {
+    await init();
 });
 
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { cleanup };
-}
+export { cleanup };
 
-window.AdvancedAvatarControlExtension = window.AdvancedAvatarControlExtension || {};
-window.AdvancedAvatarControlExtension.cleanup = cleanup;
-window.AdvancedAvatarControlExtension.regenerate = () => {
-    cleanup();
-    init();
-};
+window.AvatarManip = window.AvatarManip || {};
+window.AvatarManip.cleanup = cleanup;
+window.AvatarManip.regenerate = regenerateExtension;

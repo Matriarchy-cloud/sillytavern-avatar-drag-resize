@@ -1,9 +1,10 @@
 {
-    "display_name": "Avatar Manip",
-    "js": "index.js",
-    "author": "lightdevice - matriarchy",
-    "version": "1.0.0",
-    "description": "dragging, rotating & resizing character avatars.",
+    "display_name": "avatar-manip",
     "loading_order": 10,
-    "auto_update": false
+    "requires": [],
+    "optional": [],
+    "js": "index.js",
+    "css": "style.css",
+    "author": "lightdevice",
+    "version": "1.0.0"
 }
