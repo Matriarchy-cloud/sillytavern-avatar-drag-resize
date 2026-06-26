@@ -14,7 +14,8 @@ A third-party extension for SillyTavern that provides full control over characte
 
 ## Installation
 
-Place the extension folder into: ..\SillyTavern\SillyTavern-Launcher\SillyTavern\data\default-user\extensions\
+Place the extension folder into: 
+```..\SillyTavern\SillyTavern-Launcher\SillyTavern\data\default-user\extensions\```
 
 Restart SillyTavern or reload extensions, then enable from the Extensions panel.
 
