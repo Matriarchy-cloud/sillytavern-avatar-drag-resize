@@ -1,0 +1,11 @@
+{
+    "display_name": "Avatar Manipulator",
+    "loading_order": 10,
+    "requires": [],
+    "optional": [],
+    "js": "index.js",
+    "css": "style.css",
+    "author": "lightdevice",
+    "version": "1.0.1",
+    "auto_update": false
+}

@@ -1,0 +1,79 @@
+.zoomed_avatar {
+    cursor: grab !important;
+    transform: translate(var(--avatar-x, 0px), var(--avatar-y, 0px)) 
+               scale(var(--avatar-scale, 1)) 
+               rotate(var(--avatar-rotate, 0deg)) !important;
+    transform-origin: center center !important;
+    will-change: transform !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    position: fixed !important;
+    z-index: var(--avatar-z-index, 999999) !important;
+    transition: opacity 0.2s ease;
+    touch-action: none !important;
+    -webkit-touch-callout: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-user-drag: none !important;
+}
+
+.zoomed_avatar.dragging {
+    cursor: grabbing !important;
+}
+
+.zoomed_avatar.rotating {
+    cursor: crosshair !important;
+}
+
+.zoomed_avatar.pinching {
+    cursor: zoom-in !important;
+}
+
+.zoomed_avatar .dragClose,
+.zoomed_avatar .zoom-cross,
+.zoomed_avatar .avatar-close,
+.zoomed_avatar .fa-times,
+.zoomed_avatar .close-btn {
+    transform: scale(var(--avatar-inverse-scale, 1)) !important;
+    transform-origin: center center !important;
+    transition: transform 0.1s ease-out;
+    position: relative;
+    z-index: 9999999 !important;
+    min-width: 24px;
+    min-height: 24px;
+    touch-action: manipulation !important;
+}
+
+.mobile-control-btn {
+    -webkit-tap-highlight-color: transparent !important;
+    outline: none !important;
+}
+
+.mobile-control-btn:active {
+    transform: scale(0.95) !important;
+    transition: transform 0.1s ease !important;
+}
+
+@media (max-width: 768px) {
+    .zoomed_avatar {
+		max-height: fit-content !important;
+		position: sticky !important; 	 
+		object-fit: cover !important;
+    }
+	
+    .zoomed_avatar .dragClose,
+    .zoomed_avatar .zoom-cross,
+    .zoomed_avatar .avatar-close,
+    .zoomed_avatar .fa-times,
+    .zoomed_avatar .close-btn {
+        min-width: 32px;
+        padding: 8px;
+    }
+}
+
+@supports (-webkit-touch-callout: none) {
+    .zoomed_avatar {
+        -webkit-transform: translate(var(--avatar-x, 0px), var(--avatar-y, 0px)) 
+                          scale(var(--avatar-scale, 1)) 
+                          rotate(var(--avatar-rotate, 0deg)) !important;
+    }
+}
