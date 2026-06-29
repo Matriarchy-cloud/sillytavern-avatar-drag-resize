@@ -1,32 +1,82 @@
+/* ============================================================
+   AVATAR MANIP EXTENSION - CUSTOM STYLES
+   Author: lightdevice
+   Description: Touch/mobile-friendly avatar manipulation
+   ============================================================ */
+
+/* ============================================================
+   MAIN AVATAR STYLES
+   ============================================================ */
+
 .zoomed_avatar {
+    /* --- Touch & Interaction --- */
     cursor: grab !important;
+    touch-action: none !important;
+    -webkit-touch-callout: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-user-drag: none !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    
+    /* --- Transform & Positioning --- */
     transform: translate(var(--avatar-x, 0px), var(--avatar-y, 0px)) 
                scale(var(--avatar-scale, 1)) 
                rotate(var(--avatar-rotate, 0deg)) !important;
     transform-origin: center center !important;
     will-change: transform !important;
-    user-select: none !important;
-    -webkit-user-select: none !important;
     position: fixed !important;
     z-index: var(--avatar-z-index, 999999) !important;
+    
+    /* --- Transition & Display --- */
     transition: opacity 0.2s ease;
-    touch-action: none !important;
-    -webkit-touch-callout: none !important;
-    -webkit-tap-highlight-color: transparent !important;
-    -webkit-user-drag: none !important;
+    
+    /* --- FIX: Container fits content --- */
+    display: inline-block !important;
+    width: auto !important;
+    height: auto !important;
+    max-width: 47.5vw !important;
+    max-height: 47.5vh !important;
+    
+    /* --- Prevent cropping --- */
+    overflow: visible !important;
+    overflow-clip-margin: unset !important;
 }
 
+/* --- FIX: Image controls container size --- */
+.zoomed_avatar img {
+    display: block !important;
+    width: auto !important;
+    height: auto !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    object-fit: contain !important;
+    overflow: visible !important;
+    overflow-clip-margin: unset !important;
+    clip-path: none !important;
+    border-radius: 0 !important;
+    
+    /* --- FIX: Image determines container size --- */
+    flex-shrink: 0 !important;
+}
+
+/* --- Dragging state --- */
 .zoomed_avatar.dragging {
     cursor: grabbing !important;
 }
 
+/* --- Rotating state --- */
 .zoomed_avatar.rotating {
     cursor: crosshair !important;
 }
 
+/* --- Pinching/zooming state --- */
 .zoomed_avatar.pinching {
     cursor: zoom-in !important;
 }
+
+/* ============================================================
+   CLOSE BUTTONS & CONTROLS
+   ============================================================ */
 
 .zoomed_avatar .dragClose,
 .zoomed_avatar .zoom-cross,
@@ -43,6 +93,7 @@
     touch-action: manipulation !important;
 }
 
+/* --- Mobile control buttons --- */
 .mobile-control-btn {
     -webkit-tap-highlight-color: transparent !important;
     outline: none !important;
@@ -53,27 +104,211 @@
     transition: transform 0.1s ease !important;
 }
 
-@media (max-width: 768px) {
+/* ============================================================
+   MOBILE
+   ============================================================ */
+
+@media (max-width:768px){
+
+.zoomed_avatar{
+    position:fixed !important;
+
+    top:50% !important;
+    left:50% !important;
+
+    width:auto !important;
+    height:auto !important;
+
+    max-width:50vw !important;
+    max-height:50vh !important;
+
+    background:transparent !important;
+    padding:0 !important;
+    border-radius:0 !important;
+
+    overflow:visible !important;
+    overflow-clip-margin:unset !important;
+
+    transform-origin:center center !important;
+
+    transform:
+        translate(
+            calc(-50% + var(--avatar-x,0px)),
+            calc(-50% + var(--avatar-y,0px))
+        )
+        scale(var(--avatar-scale,1))
+        rotate(var(--avatar-rotate,0deg))
+        !important;
+}
+
+.zoomed_avatar img{
+    display:block !important;
+
+    width:auto !important;
+    height:auto !important;
+
+    max-width:100% !important;
+    max-height:100% !important;
+
+    object-fit:contain !important;
+
+    overflow:visible !important;
+    overflow-clip-margin:unset !important;
+}
+
+/* ============================================================
+   SADECE BUTON POZISYONU - TAM SAG UST KOSEDE
+   ============================================================ */
+
+.zoomed_avatar .dragClose,
+.zoomed_avatar .zoom-cross,
+.zoomed_avatar .avatar-close,
+.zoomed_avatar .fa-times,
+.zoomed_avatar .close-btn {
+    position: absolute !important;
+    top: -8px !important;
+    right: -8px !important;
+    left: auto !important;
+    bottom: auto !important;
+    z-index: 99999999 !important;
+    min-width: 28px !important;
+    min-height: 28px !important;
+    padding: 4px !important;
+    font-size: 14px !important;
+    background: rgba(0,0,0,0.6) !important;
+    border-radius: 50% !important;
+    color: #fff !important;
+    border: 1px solid rgba(255,255,255,0.2) !important;
+    transform: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+}
+
+/* ============================================================
+   📱 VERY SMALL SCREENS (below 400px)
+   ============================================================ */
+
+@media (max-width: 400px) {
     .zoomed_avatar {
-		max-height: fit-content !important;
-		position: sticky !important; 	 
-		object-fit: cover !important;
-    }
-	
-    .zoomed_avatar .dragClose,
-    .zoomed_avatar .zoom-cross,
-    .zoomed_avatar .avatar-close,
-    .zoomed_avatar .fa-times,
-    .zoomed_avatar .close-btn {
-        min-width: 32px;
-        padding: 8px;
+        max-width: 49vw !important;
+        max-height: 40vh !important;
+        padding: 10px !important;
     }
 }
+
+/* ============================================================
+   🍎 iOS SAFARI SPECIFIC FIXES
+   ============================================================ */
 
 @supports (-webkit-touch-callout: none) {
     .zoomed_avatar {
         -webkit-transform: translate(var(--avatar-x, 0px), var(--avatar-y, 0px)) 
                           scale(var(--avatar-scale, 1)) 
                           rotate(var(--avatar-rotate, 0deg)) !important;
+        overflow: visible !important;
+        overflow-clip-margin: unset !important;
     }
+    
+    .zoomed_avatar img {
+        overflow: visible !important;
+        overflow-clip-margin: unset !important;
+    }
+}
+
+/* ============================================================
+   WAIFU MODE (VN) DYNAMIC INTERACTION FIX
+   ============================================================ */
+
+/* --- FIX 1: Allow clicks to pass through ST containers when VN is ON --- */
+body.waifuMode .expression-holder,
+body.waifuMode #character-sprite-container {
+    pointer-events: none !important;
+}
+
+/* Ensure the extension's avatar always registers touches/clicks in VN Mode */
+body.waifuMode .zoomed_avatar {
+    pointer-events: auto !important;
+}
+
+/* --- FIX 2: If VN mode is disabled, neutralize parent layouts cleanly --- */
+body:not(.waifuMode) .expression-holder,
+body:not(.waifuMode) #character-sprite-container {
+    transform: none !important;
+    perspective: none !important;
+    will-change: auto !important;
+    filter: none !important;
+    /* Prevent the container from trapping bounds */
+    overflow: visible !important; 
+}
+
+/* --- FIX 3: Reset viewport centering and fix button visibility when VN is OFF --- */
+body:not(.waifuMode) .zoomed_avatar{
+    position:fixed !important;
+
+    top:50% !important;
+    left:50% !important;
+
+    z-index:var(--avatar-z-index,999999) !important;
+
+    transform-origin:center center !important;
+
+    transform:
+        translate(
+            calc(-50% + var(--avatar-x,0px)),
+            calc(-50% + var(--avatar-y,0px))
+        )
+        scale(var(--avatar-scale,1))
+        rotate(var(--avatar-rotate,0deg))
+        !important;
+}
+
+/* Force control and close buttons to pop to the absolute top layer when VN is OFF */
+body:not(.waifuMode) .zoomed_avatar .dragClose,
+body:not(.waifuMode) .zoomed_avatar .zoom-cross,
+body:not(.waifuMode) .zoomed_avatar .avatar-close,
+body:not(.waifuMode) .zoomed_avatar .fa-times,
+body:not(.waifuMode) .zoomed_avatar .close-btn {
+    z-index: 99999999 !important;
+    position: absolute !important;
+    pointer-events: auto !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* ============================================================
+   ADDITIONAL UTILITY CLASSES
+   ============================================================ */
+
+/* --- Smooth image loading --- */
+.avatar-loading {
+    animation: avatarPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes avatarPulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
+/* --- Zoom animation helper --- */
+.avatar-zoom-in {
+    animation: avatarZoomIn 0.3s ease-out;
+}
+
+@keyframes avatarZoomIn {
+    from {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* --- Prevent overflow on body when avatar is open --- */
+body.has-avatar-open {
+    overflow: hidden !important;
 }
