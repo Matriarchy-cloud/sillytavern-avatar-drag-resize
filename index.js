@@ -1,46 +1,32 @@
-import { initSettings, getSettings } from './shared/settings.js';
-import { createUI, updateZIndexOnly } from './core/ui.js';
-import { createMobileControls } from './mobile/ui.js';
-import { registerAll, unregisterAll } from './events/registry.js';
-import { resetAllState } from './shared/state.js';
-import { clearLongPress } from './mobile/gestures.js';
+import { loadSettings, getSettings } from './src/shared/settings.js';
+import { isMobileDevice, getZIndexValue } from './src/shared/utils.js';
+import { registerDesktop } from './src/desktop/pointer.js';
+import { registerMobile } from './src/mobile/touch.js';
+import { createUI } from './src/ui/settings.js';
+import { createMobileControls } from './src/ui/mobile.js';
+import { CSS_CLASSES } from './src/shared/constants.js';
 
-function init() {
-    try {
-        initSettings();
-        const settings = getSettings();
-        
-        createUI();
-        createMobileControls();
-        registerAll();
-        updateZIndexOnly(settings.zIndexMode || 'aboveUI');
-        
-        console.log('AvatarManip: Ready');
-    } catch (err) {
-        console.error('AvatarManip init error:', err);
-    }
-}
-
-function cleanup() {
-    unregisterAll();
-    clearLongPress();
-    resetAllState();
+$(document).ready(() => {
+    console.log('AvatarManip: Starting...');
+    loadSettings();
     
-    document.getElementById('avatarmanip-container')?.remove();
-    document.getElementById('avatarmanip-mobile-controls')?.remove();
-}
-
-function regenerate() {
-    cleanup();
-    init();
-}
-
-jQuery(async () => {
-    await init();
+    // Apply initial z-index to all avatars
+    const zIndex = getZIndexValue(getSettings().zIndexMode);
+    document.querySelectorAll(`.${CSS_CLASSES.AVATAR}`).forEach(el => {
+        el.style.setProperty('--avatar-z-index', zIndex, 'important');
+    });
+    document.documentElement.style.setProperty('--avatar-z-index', zIndex);
+    
+    setTimeout(() => {
+        createUI();
+        
+        if (getSettings().enabled) {
+            if (isMobileDevice()) {
+                registerMobile();
+                createMobileControls();
+            } else {
+                registerDesktop();
+            }
+        }
+    }, 500);
 });
-
-export { cleanup, regenerate };
-
-window.AvatarManip = window.AvatarManip || {};
-window.AvatarManip.cleanup = cleanup;
-window.AvatarManip.regenerate = regenerate;
