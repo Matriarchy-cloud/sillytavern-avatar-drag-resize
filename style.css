@@ -5,12 +5,6 @@
      --am-x, --am-y, --am-scale, --am-rotate, --am-inverse-scale, --am-z-index
    Reset = all custom properties back to defaults => avatar returns to center.
 
-   Two layout modes are supported:
-     * SillyTavern's own positioning (used when its stylesheet already puts the
-       avatar somewhere sensible - default on desktop).
-     * `top:50%; left:50%` + `translate(-50% + x, -50% + y)` centering, which is
-       enforced on mobile viewports and when SillyTavern's WaifuMode is off, so
-       reset always brings the avatar to the middle of the screen.
    ============================================================================ */
 
 /* --------------------------- base (all viewports) -------------------------- */
