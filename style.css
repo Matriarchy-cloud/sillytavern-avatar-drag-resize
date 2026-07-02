@@ -125,24 +125,8 @@
 }
 
 /* --------------------------- WaifuMode handling --------------------------- */
-
-body.waifuMode .expression-holder,
-body.waifuMode #character-sprite-container {
-    pointer-events: none !important;
-}
 body.waifuMode .zoomed_avatar {
     pointer-events: auto !important;
-}
-
-/* When WaifuMode is off SillyTavern hides / stops positioning the sprite;
-   we take over and center the avatar ourselves on every viewport. */
-body:not(.waifuMode) .expression-holder,
-body:not(.waifuMode) #character-sprite-container {
-    transform: none !important;
-    perspective: none !important;
-    will-change: auto !important;
-    filter: none !important;
-    overflow: visible !important;
 }
 
 body:not(.waifuMode) .zoomed_avatar {
@@ -159,10 +143,6 @@ body:not(.waifuMode) .zoomed_avatar {
                        rotate(var(--am-rotate, 0deg)) !important;
 }
 
-/* Desktop WaifuMode ON: SillyTavern positions .zoomed_avatar as a floating
-   popup that doesn't always land in the middle of the viewport.  We keep our
-   own centered layout here so Reset always brings the avatar back to the
-   middle of the screen, matching the WaifuMode-OFF behaviour. */
 @media (min-width: 769px) {
     body.waifuMode .zoomed_avatar {
         top: 50% !important;
