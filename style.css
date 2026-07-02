@@ -61,10 +61,6 @@
 
 /* ------------------------------ close button ------------------------------- */
 
-/*  We deliberately target ONLY SillyTavern's known close-button class names so
-    we don't accidentally match a generic wrapper.  We pin the button to the
-    exact top-right corner of the avatar and counter-scale it so it stays a
-    comfortable tap-size at every zoom level. */
 .zoomed_avatar .dragClose,
 .zoomed_avatar .zoom-cross,
 .zoomed_avatar .avatar-close,
