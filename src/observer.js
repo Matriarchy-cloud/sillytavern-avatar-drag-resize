@@ -17,12 +17,8 @@ function applyZIndex(el) {
 
 function onMount(el) {
     applyZIndex(el);
-    // Apply our transform IMMEDIATELY so the first paint is already correct.
     restoreAvatar(el);
 
-    // SillyTavern may write its own inline top/left/transform on the element
-    // in the next animation frame (opening animation).  Re-apply ours after a
-    // couple of frames to make sure we win.
     requestAnimationFrame(() => {
         if (document.contains(el)) restoreAvatar(el);
         requestAnimationFrame(() => {
@@ -30,8 +26,6 @@ function onMount(el) {
         });
     });
 
-    // If the image is still loading, apply once more on load (its natural size
-    // can influence layout via SillyTavern's own JS).
     const img = el.querySelector('img');
     if (img && !img.complete) {
         img.addEventListener('load', () => {
