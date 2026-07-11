@@ -45,6 +45,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
 
     // Saved transforms per character/avatar (auto-managed, do not edit manually)
     savedPositions: {},
+    customImages: {},
 });
 
 // Ensure our slice of `extension_settings` exists and every default key is present
@@ -59,6 +60,12 @@ export function initSettings() {
             context.extensionSettings[EXT_NAME][key] = structuredClone(DEFAULT_SETTINGS[key]);
         }
     }
+
+    const current = context.extensionSettings[EXT_NAME];
+    if (typeof current.mobileYBias !== 'number' || current.mobileYBias < 150 || current.mobileYBias > 500) {
+        current.mobileYBias = DEFAULT_SETTINGS.mobileYBias;
+    }
+
     return context.extensionSettings[EXT_NAME];
 }
 
@@ -71,23 +78,67 @@ export function saveSettings() {
     ctx().saveSettingsDebounced?.();
 }
 
+export function getCustomImageSource(el) {
+    const key = getAvatarKey(el);
+    if (!key) return null;
+    return getSettings().customImages?.[key] ?? null;
+}
+
+export function setCustomImageSource(el, source) {
+    const key = getAvatarKey(el);
+    if (!key) return;
+    const settings = getSettings();
+    if (!settings.customImages) settings.customImages = {};
+    settings.customImages[key] = source;
+    saveSettings();
+}
+
+export function clearCustomImageSource(el) {
+    const key = getAvatarKey(el);
+    if (!key) return;
+
+    const settings = getSettings();
+
+    if (settings.customImages) {
+        delete settings.customImages[key];
+        saveSettings();
+    }
+}
+
 // -------------------- per-character position persistence --------------------
 
 // Derive a stable key for an avatar. Prefers SillyTavern's `forChar` attribute
 // (populated on the zoomed avatar element) and falls back to the image path.
+const ORIGINAL_SRC_DATAKEY = 'amOriginalSrc';
+const AVATAR_KEY_DATAKEY = 'amAvatarKey';
+
 export function getAvatarKey(el) {
     if (!el) return null;
+    if (el.dataset[AVATAR_KEY_DATAKEY]) return el.dataset[AVATAR_KEY_DATAKEY];
+
     const forChar = el.getAttribute('forChar') || el.getAttribute('data-char');
-    if (forChar) return `char:${forChar}`;
-    const img = el.querySelector('img');
-    if (img?.src) {
-        try {
-            return `img:${new URL(img.src, window.location.href).pathname}`;
-        } catch {
-            return `img:${img.src}`;
-        }
+    if (forChar) {
+        const key = `char:${forChar}`;
+        el.dataset[AVATAR_KEY_DATAKEY] = key;
+        return key;
     }
-    return null;
+
+    const img = el.querySelector('img');
+    if (!img) return null;
+
+    const original = el.dataset[ORIGINAL_SRC_DATAKEY] || img.dataset[ORIGINAL_SRC_DATAKEY];
+    const src = original || img.src;
+    if (!src) return null;
+
+    const key = (() => {
+        try {
+            return `img:${new URL(src, window.location.href).pathname}`;
+        } catch {
+            return `img:${src}`;
+        }
+    })();
+    el.dataset[AVATAR_KEY_DATAKEY] = key;
+    return key;
 }
 
 export function loadPosition(el) {

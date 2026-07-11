@@ -10,8 +10,9 @@ A third-party SillyTavern extension that allows free positioning, rotation, zoom
 - **Reset**: Double-click (desktop), double-tap or long-press (mobile), on-screen Reset button.
 - **Mobile Controls panel**: Zoom, rotate, move, and reset buttons. Buttons repeat when held down.
 - **Three layers**: Background / Above Chat / Above UI.
+- **Custom avatar image**: Pick a local image to replace the current avatar and persist the choice across reloads.
 - **Persistence**: Each character's (or avatar image's) last transform values are stored in SillyTavern's own `extension_settings` field — synced to the server and preserved across different devices.
-- **Waifu Mode compatible**: Works correctly with WaifuMode both enabled and disabled.
+- **VN compatible**: Works correctly with WaifuMode both enabled and disabled.
 - **Debug / diagnostics**: Instantly restart the extension via `window.AvatarManip.regenerate()`.
 
 ## Installation
@@ -49,6 +50,12 @@ In the console:
 `AvatarManip.init();`         // start again
 
 ## Release Notes
+
+### v2.2.0
+- Added local avatar image replacement and reset support.
+- Stored custom avatar images in `extension_settings.customImages` with a validated data URL source.
+- Added mobile and settings panel controls for changing and resetting the avatar image.
+- Preserved existing drag/rotate/zoom/reset pipelines unchanged.
 
 ### v2.0.0
 - **Rewritten from scratch.** Modular architecture: `shared/`, `gestures/`, `ui/`, single `input.js` event management, `observer.js`, `lifecycle.js`.

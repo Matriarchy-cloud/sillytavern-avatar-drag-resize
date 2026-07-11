@@ -1,0 +1,233 @@
+/* ============================================================================
+   Avatar Manipulator - Stylesheet
+   Avatar transforms are controlled through the CSS custom properties:
+   --am-x, --am-y, --am-scale, and --am-rotate.
+   ============================================================================ */
+
+/* ------------------------- Core layout (all viewports) ------------------------- */
+
+.zoomed_avatar {
+    cursor: grab !important;
+    touch-action: none !important;
+    -webkit-touch-callout: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-user-drag: none !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+
+    position: fixed !important;
+    pointer-events: auto !important;
+    top: 50% !important;
+    left: 50% !important;
+    right: auto !important;
+    bottom: auto !important;
+    margin: 0 !important;
+
+    transform: translate(calc(-50% + var(--am-x, 0px)), calc(-50% + var(--am-y, 0px)))
+               scale(var(--am-scale, 1))
+               rotate(var(--am-rotate, 0deg)) !important;
+    -webkit-transform: translate(calc(-50% + var(--am-x, 0px)), calc(-50% + var(--am-y, 0px)))
+                       scale(var(--am-scale, 1))
+                       rotate(var(--am-rotate, 0deg)) !important;
+    transform-origin: center center !important;
+    will-change: transform !important;
+
+    z-index: var(--am-z-index, 999999) !important;
+
+    display: inline-block !important;
+    box-sizing: border-box !important;
+    width: auto !important;
+    height: auto !important;
+    max-width: 80vw !important;
+    max-height: 80vh !important;
+    padding: 0 !important;
+
+    overflow: visible !important;
+    overflow-clip-margin: unset !important;
+    transition: opacity 0.2s ease;
+}
+
+.zoomed_avatar img {
+    display: block !important;
+    width: auto !important;
+    height: auto !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    object-fit: contain !important;
+    overflow: visible !important;
+    overflow-clip-margin: unset !important;
+    clip-path: none !important;
+    border-radius: 0 !important;
+    flex-shrink: 0 !important;
+    pointer-events: auto !important;
+}
+
+.zoomed_avatar .zoomed_avatar_img {
+    display: block !important;
+    box-sizing: border-box !important;
+    width: auto !important;
+    height: auto !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    background-position: center center !important;
+    background-repeat: no-repeat !important;
+    background-size: contain !important;
+}
+
+.zoomed_avatar.am-dragging { cursor: grabbing !important; }
+.zoomed_avatar.am-rotating { cursor: crosshair !important; }
+.zoomed_avatar.am-pinching { cursor: zoom-in !important; }
+
+/* ------------------------------ Close button ------------------------------- */
+
+.zoomed_avatar .dragClose,
+.zoomed_avatar .zoom-cross,
+.zoomed_avatar .avatar-close,
+.zoomed_avatar .fa-times {
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
+    left: auto !important;
+    bottom: auto !important;
+    margin: 0 !important;
+
+    transform: scale(var(--am-inverse-scale, 1)) !important;
+    transform-origin: 100% 0 !important;
+    transition: transform 0.12s ease-out;
+
+    pointer-events: auto !important;
+    touch-action: manipulation !important;
+    z-index: 99999999 !important;
+}
+
+/* ------------------------- Mobile controls ------------------------- */
+
+.mobile-control-btn {
+    -webkit-tap-highlight-color: transparent !important;
+    outline: none !important;
+}
+
+.mobile-control-btn:active {
+    transform: scale(0.95);
+    transition: transform 0.1s ease;
+}
+
+/* ---------------------- Mobile viewport adjustments ----------------------- */
+
+@media (max-width: 768px) {
+    .zoomed_avatar {
+        top: 50% !important;
+        left: 50% !important;
+        right: auto !important;
+        bottom: auto !important;
+        margin: 0 !important;
+        max-width: 55vw !important;
+        max-height: 55vh !important;
+        background: transparent !important;
+        padding: 0 !important;
+        border-radius: 0 !important;
+
+        transform: translate(calc(-50% + var(--am-x, 0px)), calc(-50% + var(--am-y, 0px)))
+                   scale(var(--am-scale, 1))
+                   rotate(var(--am-rotate, 0deg)) !important;
+        -webkit-transform: translate(calc(-50% + var(--am-x, 0px)), calc(-50% + var(--am-y, 0px)))
+                           scale(var(--am-scale, 1))
+                           rotate(var(--am-rotate, 0deg)) !important;
+    }
+}
+
+@media (max-width: 400px) {
+    .zoomed_avatar {
+        max-width: 65vw !important;
+        max-height: 45vh !important;
+    }
+}
+
+/* ------------------------- WaifuMode compatibility ------------------------ */
+
+/* Override SillyTavern's built-in WaifuMode layout. */
+
+body.waifuMode .zoomed_avatar,
+body.mobile_layout.waifuMode .zoomed_avatar {
+    display: block !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    opacity: 1 !important;
+
+    width: auto !important;
+    height: auto !important;
+    aspect-ratio: auto !important;
+    position: fixed !important;
+
+    top: 50% !important;
+    left: 50% !important;
+    right: auto !important;
+    bottom: auto !important;
+    margin: 0 !important;
+}
+
+/* Prevent the container from clipping the avatar. */
+
+body.waifuMode .zoomed_avatar_container,
+body.mobile_layout.waifuMode .zoomed_avatar_container {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+}
+
+/* Desktop viewport constraints. */
+
+body.waifuMode .zoomed_avatar img,
+body.waifuMode .zoomed_avatar .zoomed_avatar_img {
+    width: auto !important;
+    height: auto !important;
+    max-width: 80vw !important;
+    max-height: 80vh !important;
+    object-fit: contain !important;
+}
+
+/* Mobile viewport constraints. */
+
+@media (max-width: 768px) {
+    body.waifuMode .zoomed_avatar,
+    body.mobile_layout.waifuMode .zoomed_avatar {
+        max-width: 65vw !important;
+        max-height: 55vh !important;
+    }
+
+    body.waifuMode .zoomed_avatar img,
+    body.mobile_layout.waifuMode .zoomed_avatar img,
+    body.waifuMode .zoomed_avatar .zoomed_avatar_img,
+    body.mobile_layout.waifuMode .zoomed_avatar .zoomed_avatar_img {
+        width: auto !important;
+        height: auto !important;
+        max-width: 100% !important;
+        max-height: 100% !important;
+        object-fit: contain !important;
+    }
+}
+
+@media (max-width: 400px) {
+    body.waifuMode .zoomed_avatar,
+    body.mobile_layout.waifuMode .zoomed_avatar {
+        max-width: 75vw !important;
+        max-height: 50vh !important;
+    }
+}
+
+/* --------------------------- Settings panel --------------------------- */
+
+@media (max-width: 768px) {
+    #avatarmanip-settings select,
+    #avatarmanip-settings input[type="number"],
+    #avatarmanip-settings input[type="range"] {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        font-size: 14px !important;
+    }
+}

@@ -8,6 +8,7 @@ import { getSettings, saveSettings } from '../shared/settings.js';
 import { isMobileDevice } from '../shared/utils.js';
 import { applyZIndexEverywhere } from '../observer.js';
 import { readAvatar, writeAvatar } from '../shared/avatar.js';
+import { pickAndApplyLocalImage, resetCustomImage } from '../shared/image.js';
 
 // Poll until SillyTavern's extension settings panel exists, then run `fn`.
 function whenPanelReady(fn, attempts = 60) {
@@ -50,6 +51,20 @@ function html(s) {
                     <input type="checkbox" data-am-key="showToasts" ${s.showToasts ? 'checked' : ''}>
                     <span>Show Toast Notifications</span>
                 </label>
+
+                <div style="margin:10px 0;padding:10px;border:1px solid rgba(255,255,255,0.12);border-radius:10px;">
+                    <div style="font-weight:bold;margin-bottom:8px;">Avatar Image</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                        <button type="button" data-am-action="changeImage"
+                                style="flex:1 1 calc(50% - 4px);padding:10px;border:none;border-radius:8px;background:var(--accent-color,#4a90e2);color:#fff;cursor:pointer;">
+                            Change Avatar Image
+                        </button>
+                        <button type="button" data-am-action="resetImage"
+                                style="flex:1 1 calc(50% - 4px);padding:10px;border:none;border-radius:8px;background:#ff6b6b;color:#fff;cursor:pointer;">
+                            Reset Avatar Image
+                        </button>
+                    </div>
+                </div>
 
                 ${range('Zoom Speed (wheel)',       'zoomSpeed',         s.zoomSpeed,         0.05, 0.5,  0.05)}
                 ${range('Rotation Threshold',      'rotationThreshold', s.rotationThreshold, 0.1,  0.95, 0.05)}
@@ -116,6 +131,20 @@ function bind(root) {
                 });
             }
             saveSettings();
+        });
+    });
+
+    root.querySelectorAll('[data-am-action]').forEach((button) => {
+        button.addEventListener('click', async () => {
+            const action = button.dataset.amAction;
+            const avatar = document.querySelector(`.${CSS_CLASSES.AVATAR}.${CSS_CLASSES.ACTIVE}`) || document.querySelector(`.${CSS_CLASSES.AVATAR}`);
+            if (action === 'changeImage') {
+                await pickAndApplyLocalImage(avatar);
+                return;
+            }
+            if (action === 'resetImage') {
+                if (avatar) resetCustomImage(avatar);
+            }
         });
     });
 }

@@ -42,6 +42,15 @@ export const Z_INDEX_MAP = Object.freeze({
     aboveUI: 999999,
 });
 
+export const MAX_CUSTOM_IMAGE_BYTES = 6 * 1024 * 1024;
+
+export const AVATAR_SOURCE_KINDS = Object.freeze({
+    DATA_URL: 'dataUrl',
+    URL: 'url',       // reserved for future external URL support
+    UPLOAD: 'upload', // reserved for future server-upload support
+    PACK: 'pack',     // reserved for future avatar pack/frame support
+});
+
 // Any element matching this selector should never trigger avatar manipulation
 // (close buttons, form inputs, and the on-screen mobile control buttons).
 export const EXCLUDED_SELECTOR = [

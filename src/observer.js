@@ -7,6 +7,7 @@ import { CSS_CLASSES, CSS_VARS } from './shared/constants.js';
 import { getSettings } from './shared/settings.js';
 import { getZIndexValue } from './shared/utils.js';
 import { restoreAvatar } from './shared/avatar.js';
+import { applyCustomImage } from './shared/image.js';
 
 let observer = null;
 
@@ -18,6 +19,7 @@ function applyZIndex(el) {
 function onMount(el) {
     applyZIndex(el);
     restoreAvatar(el);
+    applyCustomImage(el);
 
     requestAnimationFrame(() => {
         if (document.contains(el)) restoreAvatar(el);
@@ -29,7 +31,10 @@ function onMount(el) {
     const img = el.querySelector('img');
     if (img && !img.complete) {
         img.addEventListener('load', () => {
-            if (document.contains(el)) restoreAvatar(el);
+            if (document.contains(el)) {
+                restoreAvatar(el);
+                applyCustomImage(el);
+            }
         }, { once: true });
     }
 }

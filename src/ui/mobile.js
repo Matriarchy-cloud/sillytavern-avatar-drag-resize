@@ -10,8 +10,10 @@ import { getSettings } from '../shared/settings.js';
 import { getActiveAvatar, isMobileDevice } from '../shared/utils.js';
 import { readAvatar, writeAvatar, resetAvatar } from '../shared/avatar.js';
 import { stepZoom } from '../gestures/zoom.js';
+import { pickAndApplyLocalImage } from '../shared/image.js';
 
 const REPEAT_MS = 90;
+const ONE_SHOT_KEYS = new Set(['reset', 'image']);
 
 const BUTTONS = [
     { key: 'zoom-in',      icon: 'fa-magnifying-glass-plus',  label: 'Zoom In' },
@@ -22,6 +24,7 @@ const BUTTONS = [
     { key: 'move-left',    icon: 'fa-arrow-left',             label: 'Left' },
     { key: 'move-right',   icon: 'fa-arrow-right',            label: 'Right' },
     { key: 'move-down',    icon: 'fa-arrow-down',             label: 'Down', span: 2 },
+    { key: 'image',        icon: 'fa-image',                  label: 'Image' },
     { key: 'reset',        icon: 'fa-undo',                   label: 'Reset', span: 2, danger: true },
 ];
 
@@ -74,6 +77,20 @@ function performAction(key, target) {
     writeAvatar(target);
 }
 
+function performOneShot(key, target) {
+    if (!target) return;
+    switch (key) {
+        case 'reset':
+            resetAvatar(target);
+            break;
+        case 'image':
+            pickAndApplyLocalImage(target);
+            break;
+        default:
+            break;
+    }
+}
+
 // -------------------- interval control --------------------
 
 function stopRepeat(key) {
@@ -109,13 +126,12 @@ function bind(container) {
         e.stopPropagation();
 
         const key = btn.dataset.amBtn;
-        if (key === 'reset') {
-            const t = getActiveAvatar();
-            if (t) resetAvatar(t);
+        const target = getActiveAvatar();
+        if (ONE_SHOT_KEYS.has(key)) {
+            performOneShot(key, target);
             return;
         }
 
-        const target = getActiveAvatar();
         performAction(key, target);
         stopRepeat(key);
         intervals.mobile[key] = setInterval(() => performAction(key, getActiveAvatar()), REPEAT_MS);
