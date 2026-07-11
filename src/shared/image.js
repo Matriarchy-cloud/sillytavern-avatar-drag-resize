@@ -15,6 +15,8 @@ const ORIGINAL_SRC_KEY = 'amOriginalSrc';
 const IMAGE_OBSERVER_KEY = 'amImageObserver';
 const IMAGE_RESETTING_KEY = 'amImageResetting';
 
+const originalSourcesCache = new Map();
+
 function getAvatarImageElements(el) {
     if (!el) return [];
     const imgs = Array.from(el.querySelectorAll('img'));
@@ -27,7 +29,7 @@ function getImageSourceValue(imageEl) {
     if (imageEl.tagName === 'IMG') return imageEl.src || null;
     if (imageEl.hasAttribute('src')) return imageEl.getAttribute('src');
     const bg = imageEl.style.backgroundImage || getComputedStyle(imageEl).backgroundImage;
-    return bg && bg !== 'none' ? bg.slice(5, -2) : null;
+    return (bg && bg !== 'none') ? bg.slice(5, -2) : null;
 }
 
 function setImageSourceValue(imageEl, url) {
@@ -43,13 +45,36 @@ function setImageSourceValue(imageEl, url) {
     imageEl.style.backgroundImage = `url("${url}")`;
 }
 
+function getCharacterKey(el) {
+    return el ? (el.getAttribute('data-character-key') || el.id || 'default_avatar') : 'default_avatar';
+}
+
 function getOriginalSource(el) {
-    return el?.dataset?.[ORIGINAL_SRC_KEY] ?? null;
+    const cacheKey = getCharacterKey(el);
+    if (originalSourcesCache.has(cacheKey)) {
+        return originalSourcesCache.get(cacheKey);
+    }
+    return (el && el.dataset && el.dataset[ORIGINAL_SRC_KEY]) ? el.dataset[ORIGINAL_SRC_KEY] : null;
 }
 
 function setOriginalSource(el, value) {
     if (!el || !value) return;
     el.dataset[ORIGINAL_SRC_KEY] = value;
+    const cacheKey = getCharacterKey(el);
+    if (!originalSourcesCache.has(cacheKey)) {
+        originalSourcesCache.set(cacheKey, value);
+    }
+}
+
+function forceLayoutRecalculation(imageEl) {
+    if (!imageEl) return;
+    window.dispatchEvent(new Event('resize'));
+    if (imageEl.tagName === 'IMG') {
+        const width = imageEl.clientWidth;
+        imageEl.style.display = 'none';
+        imageEl.offsetHeight;
+        imageEl.style.display = 'block';
+    }
 }
 
 function rememberOriginal(imageEl, el, customUrl) {
@@ -87,7 +112,12 @@ export function applyCustomImage(el) {
     imageEls.forEach((imageEl) => {
         rememberOriginal(imageEl, el, url);
         const current = getImageSourceValue(imageEl);
-        if (current !== url) setImageSourceValue(imageEl, url);
+        if (current !== url) {
+            setImageSourceValue(imageEl, url);
+            if (imageEl.tagName === 'IMG') {
+                imageEl.addEventListener('load', () => forceLayoutRecalculation(imageEl), { once: true });
+            }
+        }
     });
 
     if (!el.dataset[IMAGE_OBSERVER_KEY]) {
@@ -104,6 +134,9 @@ export function applyCustomImage(el) {
                     if (latest !== currentUrl) {
                         rememberOriginal(latestEl, el);
                         setImageSourceValue(latestEl, currentUrl);
+                        if (latestEl.tagName === 'IMG') {
+                            latestEl.addEventListener('load', () => forceLayoutRecalculation(latestEl), { once: true });
+                        }
                     }
                 });
             });
@@ -122,24 +155,31 @@ export function resetCustomImage(el) {
     if (originalSource) {
         getAvatarImageElements(el).forEach((imageEl) => {
             setImageSourceValue(imageEl, originalSource);
+            if (imageEl.tagName === 'IMG') {
+                imageEl.addEventListener('load', () => forceLayoutRecalculation(imageEl), { once: true });
+            }
         });
     }
 
     clearCustomImageSource(el);
-    // Keep ORIGINAL_SRC_KEY on dataset so we can repeat this loop infinitely
 
     document.querySelectorAll(`.${CSS_CLASSES.AVATAR}`).forEach((avatarEl) => {
         if (avatarEl !== el) {
             const extraOriginal = getOriginalSource(avatarEl);
             if (extraOriginal) {
-                getAvatarImageElements(avatarEl).forEach((img) => setImageSourceValue(img, extraOriginal));
+                getAvatarImageElements(avatarEl).forEach((img) => {
+                    setImageSourceValue(img, extraOriginal);
+                    if (img.tagName === 'IMG') {
+                        img.addEventListener('load', () => forceLayoutRecalculation(img), { once: true });
+                    }
+                });
             }
         }
     });
 
     setTimeout(() => {
         delete el.dataset[IMAGE_RESETTING_KEY];
-    }, 150);
+    }, 200);
 
     informIfEnabled('Avatar image reset');
 }
@@ -163,7 +203,7 @@ export async function pickAndApplyLocalImage(el) {
         document.querySelectorAll(`.${CSS_CLASSES.AVATAR}`).forEach(applyCustomImage);
         informIfEnabled('Avatar image updated');
     } catch (err) {
-        if (err?.code === 'IMAGE_TOO_LARGE') {
+        if (err && err.code === 'IMAGE_TOO_LARGE') {
             toast('Image is too large (max 6 MB)');
         } else {
             toast('Could not read image');
@@ -189,7 +229,7 @@ function pickImageFile() {
             resolve(value);
         };
 
-        input.addEventListener('change', () => done(input.files?.[0] ?? null), { once: true });
+        input.addEventListener('change', () => done(input.files ? input.files[0] : null), { once: true });
         input.addEventListener('cancel', () => done(null), { once: true });
 
         input.click();
