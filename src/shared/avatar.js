@@ -34,7 +34,7 @@ export function readAvatar(el) {
     rotationState.rotation = parseFloat(el.dataset[DATA_ATTRS.ROTATION]) || 0;
 }
 
-const saveTimers = new WeakMap();
+const saveTimers = new Map();
 function cancelScheduledSave(el) {
     const timer = saveTimers.get(el);
     if (timer) clearTimeout(timer);
@@ -53,6 +53,11 @@ function scheduleSave(el, transform) {
         saveTimers.delete(el);
     }, 250);
     saveTimers.set(el, timer);
+}
+
+export function cancelPendingAvatarSaves() {
+    saveTimers.forEach((timer) => clearTimeout(timer));
+    saveTimers.clear();
 }
 
 // Remove any inline layout properties we may have added earlier (used when

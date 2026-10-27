@@ -4,6 +4,7 @@
 
 import { initSettings } from './shared/settings.js';
 import { resetInteractionState } from './shared/state.js';
+import { cancelPendingAvatarSaves } from './shared/avatar.js';
 import { isMobileDevice } from './shared/utils.js';
 import { registerInputHandlers, unregisterInputHandlers } from './input.js';
 import { registerMultipleAvatarSupport, unregisterMultipleAvatarSupport } from './multiple-avatars.js';
@@ -26,7 +27,7 @@ export async function init() {
         if (isMobileDevice()) createMobileControls();
         console.log('[AvatarManip] ready');
     } catch (err) {
-        started = false;
+        cleanup();
         console.error('[AvatarManip] init failed', err);
     }
 }
@@ -34,6 +35,7 @@ export async function init() {
 export function cleanup() {
     unregisterInputHandlers();
     unregisterMultipleAvatarSupport();
+    cancelPendingAvatarSaves();
     stopObserver();
     removeSettingsUI();
     removeMobileControls();

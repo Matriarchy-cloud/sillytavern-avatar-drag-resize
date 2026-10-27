@@ -119,9 +119,8 @@ export function getAvatarKey(el) {
     const forChar = el.getAttribute('forChar') || el.getAttribute('data-char');
     if (forChar) {
         const key = `char:${forChar}`;
-        // SillyTavern assigns `forChar` after the template image exists. A
-        // prior lookup may therefore have cached its empty src as `img:/`;
-        // always upgrade that provisional key to the stable character key.
+        // If a prior lookup keyed a blank template image, prefer the stable
+        // character key once `forChar` is available.
         el.dataset[AVATAR_KEY_DATAKEY] = key;
         return key;
     }
@@ -132,8 +131,8 @@ export function getAvatarKey(el) {
     if (!img) return null;
 
     const original = el.dataset[ORIGINAL_SRC_DATAKEY] || img.dataset[ORIGINAL_SRC_DATAKEY];
-    // Do not use `img.src` alone: for a blank template image the browser
-    // resolves it to the current page URL, yielding the shared `img:/` key.
+    // Do not use `img.src` alone: a blank template image resolves to the
+    // current page URL, creating a shared fallback key.
     const attributeSrc = img.getAttribute('src');
     const src = original || attributeSrc;
     if (!src) return null;
