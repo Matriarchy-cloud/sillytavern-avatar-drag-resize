@@ -1,49 +1,50 @@
 // ============================================================================
-//  Multiple avatars - retain already-open native avatar nodes when another
-//  chat avatar is selected. SillyTavern normally removes those nodes unless
-//  its global Moving UI setting is enabled; this keeps the feature local to
-//  Avatar Manipulator instead of changing that unrelated global preference.
+//  Multiple avatars - make SillyTavern keep already-open avatar nodes when
+//  another chat avatar is selected, without permanently enabling its global
+//  Moving UI setting.
 // ============================================================================
 
-import { CSS_CLASSES } from './shared/constants.js';
 import { getSettings } from './shared/settings.js';
 
 let registered = false;
 let generation = 0;
+let restoreTimer = null;
+let originalMovingUI = null;
+let temporarilyChangedSettings = null;
 
-function getClickedCharacterName(target) {
-    const avatar = target.closest?.('.mes .avatar');
-    const image = Array.from(avatar?.children ?? []).find((el) => el.tagName === 'IMG');
-    const source = image?.getAttribute('src');
-    if (!source) return null;
-
-    // This intentionally mirrors SillyTavern's `charname` calculation so the
-    // avatar being clicked still keeps its normal click-to-close behaviour.
-    const avatarFile = source.slice(source.lastIndexOf('=') + 1);
-    return avatarFile.replace('.png', '');
+function getPowerUserSettings() {
+    const context = globalThis.SillyTavern?.getContext?.();
+    return context?.powerUserSettings ?? globalThis.power_user ?? null;
 }
 
 function onChatAvatarClick(e) {
     if (!getSettings().enabled || !getSettings().allowMultipleAvatars) return;
     if (!(e.target instanceof Element)) return;
+    if (!e.target.closest('.mes .avatar')) return;
 
-    const characterName = getClickedCharacterName(e.target);
-    if (characterName === null) return;
+    const powerUserSettings = getPowerUserSettings();
+    if (!powerUserSettings || powerUserSettings.movingUI) return;
 
-    const avatarsToRestore = Array.from(document.querySelectorAll(`.${CSS_CLASSES.AVATAR}`))
-        .filter((avatar) => avatar.getAttribute('forChar') !== characterName);
-    if (avatarsToRestore.length === 0) return;
+    // SillyTavern checks `movingUI` inside its delegated click handler before
+    // removing previously opened avatars. Capture phase lets us set it just
+    // for this click; the regular Moving UI setting itself is restored after
+    // that handler finishes.
+    if (restoreTimer) clearTimeout(restoreTimer);
+    if (temporarilyChangedSettings !== powerUserSettings) {
+        originalMovingUI = powerUserSettings.movingUI;
+        temporarilyChangedSettings = powerUserSettings;
+    }
+    powerUserSettings.movingUI = true;
 
     const currentGeneration = generation;
-    queueMicrotask(() => {
-        if (currentGeneration !== generation || !getSettings().allowMultipleAvatars) return;
-
-        avatarsToRestore.forEach((avatar) => {
-            // SillyTavern removed this node while handling the click. Reattach
-            // the original node so its transform and extension state survive.
-            if (!avatar.isConnected) document.body.append(avatar);
-        });
-    });
+    restoreTimer = setTimeout(() => {
+        if (currentGeneration === generation && temporarilyChangedSettings?.movingUI === true) {
+            temporarilyChangedSettings.movingUI = originalMovingUI;
+        }
+        restoreTimer = null;
+        originalMovingUI = null;
+        temporarilyChangedSettings = null;
+    }, 0);
 }
 
 export function registerMultipleAvatarSupport() {
@@ -55,6 +56,13 @@ export function registerMultipleAvatarSupport() {
 
 export function unregisterMultipleAvatarSupport() {
     generation += 1;
+    if (restoreTimer) clearTimeout(restoreTimer);
+    if (temporarilyChangedSettings?.movingUI === true) {
+        temporarilyChangedSettings.movingUI = originalMovingUI;
+    }
+    restoreTimer = null;
+    originalMovingUI = null;
+    temporarilyChangedSettings = null;
     document.removeEventListener('click', onChatAvatarClick, true);
     registered = false;
 }
