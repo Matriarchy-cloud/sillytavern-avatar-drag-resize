@@ -6,6 +6,7 @@ import { initSettings } from './shared/settings.js';
 import { resetInteractionState } from './shared/state.js';
 import { isMobileDevice } from './shared/utils.js';
 import { registerInputHandlers, unregisterInputHandlers } from './input.js';
+import { registerMultipleAvatarSupport, unregisterMultipleAvatarSupport } from './multiple-avatars.js';
 import { startObserver, stopObserver, applyZIndexEverywhere } from './observer.js';
 import { createSettingsUI, removeSettingsUI } from './ui/settings.js';
 import { createMobileControls, removeMobileControls } from './ui/mobile.js';
@@ -20,6 +21,7 @@ export async function init() {
         startObserver();
         applyZIndexEverywhere();
         registerInputHandlers();
+        registerMultipleAvatarSupport();
         createSettingsUI();
         if (isMobileDevice()) createMobileControls();
         console.log('[AvatarManip] ready');
@@ -31,6 +33,7 @@ export async function init() {
 
 export function cleanup() {
     unregisterInputHandlers();
+    unregisterMultipleAvatarSupport();
     stopObserver();
     removeSettingsUI();
     removeMobileControls();

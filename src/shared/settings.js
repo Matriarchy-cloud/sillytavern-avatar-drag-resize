@@ -26,6 +26,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
     zIndexMode: 'aboveUI',            // 'background' | 'aboveChat' | 'aboveUI'
     ghostDragEffect: true,             // Fade avatar during interaction
     showToasts: true,                  // Toast on reset
+    allowMultipleAvatars: true,        // Keep previously opened avatars visible
 
     // Zoom
     zoomSpeed: 0.1,                    // Desktop wheel step
