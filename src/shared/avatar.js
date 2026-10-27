@@ -35,8 +35,14 @@ export function readAvatar(el) {
 }
 
 const saveTimers = new WeakMap();
+function cancelScheduledSave(el) {
+    const timer = saveTimers.get(el);
+    if (timer) clearTimeout(timer);
+    saveTimers.delete(el);
+}
+
 function scheduleSave(el, transform) {
-    clearTimeout(saveTimers.get(el));
+    cancelScheduledSave(el);
 
     // `dragState` is shared by the active interaction. Capture the transform
     // now, rather than reading it when the debounce fires, so another avatar
@@ -125,6 +131,7 @@ export function writeAvatar(el, { persist = true } = {}) {
 // Bring `el` back to center / 1x scale / 0 rotation and forget any saved state.
 export function resetAvatar(el) {
     if (!el) return;
+    cancelScheduledSave(el);
     dragState.x = 0;
     dragState.y = 0;
     dragState.scale = 1;
