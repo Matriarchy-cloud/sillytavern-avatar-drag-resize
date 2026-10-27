@@ -51,6 +51,10 @@ function html(s) {
                     <input type="checkbox" data-am-key="showToasts" ${s.showToasts ? 'checked' : ''}>
                     <span>Show Toast Notifications</span>
                 </label>
+                <label class="checkbox_label m-b-1">
+                    <input type="checkbox" data-am-key="allowMultipleAvatars" ${s.allowMultipleAvatars ? 'checked' : ''}>
+                    <span>Allow Multiple Open Avatars</span>
+                </label>
 
                 <div style="margin:10px 0;padding:10px;border:1px solid rgba(255,255,255,0.12);border-radius:10px;">
                     <div style="font-weight:bold;margin-bottom:8px;">Avatar Image</div>

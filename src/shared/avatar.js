@@ -34,18 +34,30 @@ export function readAvatar(el) {
     rotationState.rotation = parseFloat(el.dataset[DATA_ATTRS.ROTATION]) || 0;
 }
 
-let saveTimer = null;
-function scheduleSave(el) {
-    clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => {
-        savePosition(el, {
-            x: dragState.x,
-            y: dragState.y,
-            scale: dragState.scale,
-            rotation: rotationState.rotation,
-        });
-        saveTimer = null;
+const saveTimers = new Map();
+function cancelScheduledSave(el) {
+    const timer = saveTimers.get(el);
+    if (timer) clearTimeout(timer);
+    saveTimers.delete(el);
+}
+
+function scheduleSave(el, transform) {
+    cancelScheduledSave(el);
+
+    // `dragState` is shared by the active interaction. Capture the transform
+    // now, rather than reading it when the debounce fires, so another avatar
+    // cannot overwrite this avatar's saved position in the meantime.
+    const snapshot = { ...transform };
+    const timer = setTimeout(() => {
+        savePosition(el, snapshot);
+        saveTimers.delete(el);
     }, 250);
+    saveTimers.set(el, timer);
+}
+
+export function cancelPendingAvatarSaves() {
+    saveTimers.forEach((timer) => clearTimeout(timer));
+    saveTimers.clear();
 }
 
 // Remove any inline layout properties we may have added earlier (used when
@@ -111,12 +123,20 @@ export function writeAvatar(el, { persist = true } = {}) {
         clearMobileInlineOverrides(el);
     }
 
-    if (persist) scheduleSave(el);
+    if (persist) {
+        scheduleSave(el, {
+            x: dragState.x,
+            y: dragState.y,
+            scale,
+            rotation,
+        });
+    }
 }
 
 // Bring `el` back to center / 1x scale / 0 rotation and forget any saved state.
 export function resetAvatar(el) {
     if (!el) return;
+    cancelScheduledSave(el);
     dragState.x = 0;
     dragState.y = 0;
     dragState.scale = 1;

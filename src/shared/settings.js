@@ -26,6 +26,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
     zIndexMode: 'aboveUI',            // 'background' | 'aboveChat' | 'aboveUI'
     ghostDragEffect: true,             // Fade avatar during interaction
     showToasts: true,                  // Toast on reset
+    allowMultipleAvatars: true,        // Keep previously opened avatars visible
 
     // Zoom
     zoomSpeed: 0.1,                    // Desktop wheel step
@@ -114,20 +115,26 @@ const AVATAR_KEY_DATAKEY = 'amAvatarKey';
 
 export function getAvatarKey(el) {
     if (!el) return null;
-    if (el.dataset[AVATAR_KEY_DATAKEY]) return el.dataset[AVATAR_KEY_DATAKEY];
 
     const forChar = el.getAttribute('forChar') || el.getAttribute('data-char');
     if (forChar) {
         const key = `char:${forChar}`;
+        // If a prior lookup keyed a blank template image, prefer the stable
+        // character key once `forChar` is available.
         el.dataset[AVATAR_KEY_DATAKEY] = key;
         return key;
     }
+
+    if (el.dataset[AVATAR_KEY_DATAKEY]) return el.dataset[AVATAR_KEY_DATAKEY];
 
     const img = el.querySelector('img');
     if (!img) return null;
 
     const original = el.dataset[ORIGINAL_SRC_DATAKEY] || img.dataset[ORIGINAL_SRC_DATAKEY];
-    const src = original || img.src;
+    // Do not use `img.src` alone: a blank template image resolves to the
+    // current page URL, creating a shared fallback key.
+    const attributeSrc = img.getAttribute('src');
+    const src = original || attributeSrc;
     if (!src) return null;
 
     const key = (() => {

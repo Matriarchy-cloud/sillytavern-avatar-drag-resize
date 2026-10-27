@@ -11,6 +11,7 @@ A third-party SillyTavern extension that allows free positioning, rotation, zoom
 - **Mobile Controls panel**: Zoom, rotate, move, and reset buttons. Buttons repeat when held down.
 - **Three layers**: Background / Above Chat / Above UI.
 - **Custom avatar image**: Pick a local image to replace the current avatar and persist the choice across reloads.
+- **Multiple avatars**: Optionally keep several character or persona avatars open at once.
 - **Persistence**: Each character's (or avatar image's) last transform values are stored in SillyTavern's own `extension_settings` field — synced to the server and preserved across different devices.
 - **VN compatible**: Works correctly with WaifuMode both enabled and disabled.
 - **Debug / diagnostics**: Instantly restart the extension via `window.AvatarManip.regenerate()`.
@@ -32,6 +33,7 @@ Alternative: Go to SillyTavern → Extensions → **Install Extension**, paste t
 | Layer Position (Z-Index) | Background / Above Chat / Above UI |
 | Opacity Feedback | Visual feedback during interaction |
 | Show Toast Notifications | Notifications for actions like reset |
+| Allow Multiple Open Avatars | Keep opened avatars visible when opening another character or persona avatar |
 | Zoom Speed | Desktop wheel zoom step |
 | Rotation Threshold | Percentage of radius from center after which rotation starts (0.7 = outer 30%) |
 | Two-Finger Rotate *(mobile)* | Toggle two-finger rotation during pinch on/off |
