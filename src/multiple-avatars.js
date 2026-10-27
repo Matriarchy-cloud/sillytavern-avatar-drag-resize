@@ -7,36 +7,13 @@
 import { getSettings } from './shared/settings.js';
 
 let registered = false;
-let movingUIOverride = null;
+let restoreTimer = null;
+let originalMovingUI = null;
+let temporarilyChangedSettings = null;
 
 function getPowerUserSettings() {
     const context = globalThis.SillyTavern?.getContext?.();
     return context?.powerUserSettings ?? globalThis.power_user ?? null;
-}
-
-function enableMovingUIForCurrentClick(settings) {
-    const descriptor = Object.getOwnPropertyDescriptor(settings, 'movingUI');
-    if (!descriptor?.configurable || !('value' in descriptor)) {
-        const originalValue = settings.movingUI;
-        settings.movingUI = true;
-        return () => {
-            if (settings.movingUI === true) settings.movingUI = originalValue;
-        };
-    }
-
-    let currentValue = descriptor.value;
-    Object.defineProperty(settings, 'movingUI', {
-        configurable: true,
-        enumerable: descriptor.enumerable,
-        get: () => true,
-        set: (value) => {
-            if (descriptor.writable) currentValue = value;
-        },
-    });
-
-    return () => {
-        Object.defineProperty(settings, 'movingUI', { ...descriptor, value: currentValue });
-    };
 }
 
 function onChatAvatarClick(e) {
@@ -48,16 +25,23 @@ function onChatAvatarClick(e) {
     if (!powerUserSettings || powerUserSettings.movingUI) return;
 
     // SillyTavern checks `movingUI` in its delegated click handler before
-    // removing earlier avatars. Limit this override to the current event task,
-    // restoring the user's actual setting before another input event can run.
-    const override = { restore: enableMovingUIForCurrentClick(powerUserSettings) };
-    movingUIOverride = override;
+    // removing earlier avatars. Keep the override through the next task so
+    // all native click processing observes it before it is restored.
+    if (restoreTimer) clearTimeout(restoreTimer);
+    if (temporarilyChangedSettings !== powerUserSettings) {
+        originalMovingUI = powerUserSettings.movingUI;
+        temporarilyChangedSettings = powerUserSettings;
+    }
+    powerUserSettings.movingUI = true;
 
-    queueMicrotask(() => {
-        if (movingUIOverride !== override) return;
-        override.restore();
-        movingUIOverride = null;
-    });
+    restoreTimer = setTimeout(() => {
+        if (temporarilyChangedSettings?.movingUI === true) {
+            temporarilyChangedSettings.movingUI = originalMovingUI;
+        }
+        restoreTimer = null;
+        originalMovingUI = null;
+        temporarilyChangedSettings = null;
+    }, 0);
 }
 
 export function registerMultipleAvatarSupport() {
@@ -68,10 +52,13 @@ export function registerMultipleAvatarSupport() {
 }
 
 export function unregisterMultipleAvatarSupport() {
-    if (movingUIOverride) {
-        movingUIOverride.restore();
-        movingUIOverride = null;
+    if (restoreTimer) clearTimeout(restoreTimer);
+    if (temporarilyChangedSettings?.movingUI === true) {
+        temporarilyChangedSettings.movingUI = originalMovingUI;
     }
+    restoreTimer = null;
+    originalMovingUI = null;
+    temporarilyChangedSettings = null;
     document.removeEventListener('click', onChatAvatarClick, true);
     registered = false;
 }
